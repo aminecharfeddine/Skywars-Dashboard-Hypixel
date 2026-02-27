@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import math
 
-API_KEY = "TA_CLE_HYPIXEL_ICI"
+API_KEY = st.secrets["API_KEY"]
 
 st.set_page_config(page_title="SkyWars Stats", layout="wide")
 
