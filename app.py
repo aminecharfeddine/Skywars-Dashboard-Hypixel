@@ -2,22 +2,18 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# ⚠️ Vérification clé API
-if "API_KEY" not in st.secrets:
-    st.error("Clé API manquante. Ajoute-la dans les secrets Streamlit.")
-    st.stop()
-
-API_KEY = st.secrets["API_KEY"]
-
 st.set_page_config(page_title="SkyWars Stats", layout="wide")
 st.title("📊 Hypixel SkyWars Stats Viewer")
 
-# Entrée utilisateur
+# Entrée de la clé API
+api_key = st.text_input("Entrez votre clé API Hypixel", type="password")
+
+# Entrée du pseudo ou UUID
 user_input = st.text_input("Entrez votre pseudo ou UUID Hypixel")
 
-if user_input:
+if api_key and user_input:
     # Appel API
-    url = f"https://api.hypixel.net/v2/player?uuid={user_input}&key={API_KEY}"
+    url = f"https://api.hypixel.net/v2/player?uuid={user_input}&key={api_key}"
     
     try:
         response = requests.get(url)
