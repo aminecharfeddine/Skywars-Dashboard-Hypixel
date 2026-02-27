@@ -12,31 +12,18 @@ api_key = st.text_input("Entrez votre clé API Hypixel", type="password")
 user_input = st.text_input("Entrez votre pseudo ou UUID Hypixel")
 
 if api_key and user_input:
-    # --- Conversion pseudo -> UUID si nécessaire ---
-    if len(user_input) <= 16:  # probablement un pseudo
-        mojang_resp = requests.get(f"https://api.mojang.com/users/profiles/minecraft/{user_input}")
-        if mojang_resp.status_code != 200:
-            st.error("Pseudo invalide !")
-            st.stop()
-        else:
-            uuid = mojang_resp.json()["id"]
-    else:
-        uuid = user_input
-
-    # --- Appel API Hypixel ---
-    url = f"https://api.hypixel.net/player?uuid={uuid}&key={api_key}"
+    # Appel API
+    url = f"https://api.hypixel.net/v2/player?uuid={user_input}&key={api_key}"
     
     try:
         response = requests.get(url)
         data = response.json()
         
         # Vérification si le joueur existe
-        player_data = data.get("player")
-        if not player_data:
+        if not data.get("player"):
             st.warning("Joueur introuvable ou UUID invalide.")
         else:
-            # --- Correction ici : stats SkyWars sous player['stats']['SkyWars'] ---
-            skywars = player_data.get("stats", {}).get("SkyWars", {})
+            skywars = data["player"].get("SkyWars", {})
             
             if not skywars:
                 st.info("Le joueur n'a pas encore joué à SkyWars.")
