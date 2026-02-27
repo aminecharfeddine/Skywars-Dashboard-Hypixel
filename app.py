@@ -20,7 +20,7 @@ if api_key and user_input:
         uuid = user_input
 
     # --- Appel à l'API Hypixel ---
-    url = f"https://api.hypixel.net/v2/player?key={api_key}&uuid={uuid}"
+    url = f"https://api.hypixel.net/player?key={api_key}&uuid={uuid}"
     resp = requests.get(url)
     
     if resp.status_code != 200:
@@ -31,11 +31,11 @@ if api_key and user_input:
         if not player_data:
             st.warning("Joueur non trouvé ou jamais joué sur Hypixel.")
         else:
-            skywars = player_data.get("SkyWars")
+            # --- Nouvelle structure : stats sous player['stats']['SkyWars'] ---
+            skywars = player_data.get("stats", {}).get("SkyWars")
             if not skywars:
                 st.warning("Aucune stats SkyWars pour ce joueur.")
             else:
-                # --- Affichage simple des stats clés ---
                 st.subheader(f"Stats SkyWars pour {user_input}")
                 st.write(f"**Wins:** {skywars.get('wins', 0)}")
                 st.write(f"**Losses:** {skywars.get('losses', 0)}")
