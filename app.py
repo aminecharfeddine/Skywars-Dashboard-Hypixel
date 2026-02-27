@@ -1,51 +1,45 @@
 import streamlit as st
 import requests
-import pandas as pd
 
-st.set_page_config(page_title="SkyWars Stats", layout="wide")
-st.title("📊 Hypixel SkyWars Stats Viewer")
+st.set_page_config(page_title="Stats SkyWars Hypixel", layout="centered")
+st.title("Hypixel SkyWars Stats")
 
-api_key = st.text_input("Entrez votre clé API Hypixel", type="password")
-user_input = st.text_input("Entrez votre pseudo ou UUID Hypixel")
+# --- Inputs utilisateur ---
+api_key = st.text_input("Entrez votre clé API Hypixel")
+user_input = st.text_input("Entrez votre pseudo ou UUID Minecraft")
 
 if api_key and user_input:
-    
-    # Vérifier si c'est un pseudo et récupérer UUID
-    if len(user_input) <= 16:  # pseudo max 16 caractères
-        mojang_url = f"https://api.mojang.com/users/profiles/minecraft/{user_input}"
-        mojang_resp = requests.get(mojang_url)
-        if mojang_resp.status_code == 200:
-            user_input = mojang_resp.json()["id"]
+    # --- Vérifier si c'est un pseudo ou UUID ---
+    if len(user_input) <= 16:  # probablement un pseudo
+        mojang_resp = requests.get(f"https://api.mojang.com/users/profiles/minecraft/{user_input}")
+        if mojang_resp.status_code != 200:
+            st.error("Pseudo invalide !")
         else:
-            st.warning("Pseudo invalide.")
+            uuid = mojang_resp.json()["id"]
+    else:
+        uuid = user_input
+
+    # --- Appel à l'API Hypixel ---
+    url = f"https://api.hypixel.net/v2/player?key={api_key}&uuid={uuid}"
+    resp = requests.get(url)
     
-    url = f"https://api.hypixel.net/v2/player?uuid={user_input}&key={api_key}"
-    try:
-        resp = requests.get(url)
+    if resp.status_code != 200:
+        st.error(f"Erreur API Hypixel : {resp.status_code}")
+    else:
         data = resp.json()
-        if not data.get("player"):
-            st.warning("Joueur introuvable.")
+        player_data = data.get("player")
+        if not player_data:
+            st.warning("Joueur non trouvé ou jamais joué sur Hypixel.")
         else:
-            skywars = data["player"].get("SkyWars", {})
+            skywars = player_data.get("SkyWars")
             if not skywars:
-                st.info("Le joueur n'a pas encore joué à SkyWars.")
+                st.warning("Aucune stats SkyWars pour ce joueur.")
             else:
-                stats = {
-                    "Wins": skywars.get("wins", 0),
-                    "Losses": skywars.get("losses", 0),
-                    "Kills": skywars.get("kills", 0),
-                    "Deaths": skywars.get("deaths", 0),
-                    "Win Streak": skywars.get("win_streak", 0),
-                    "Games Played": skywars.get("games", 0),
-                    "Coins": skywars.get("coins", 0),
-                    "Souls": skywars.get("souls", 0),
-                }
-                df = pd.DataFrame(stats.items(), columns=["Stat", "Value"])
-                st.subheader(f"SkyWars Stats pour {user_input}")
-                st.table(df)
-                kd = stats["Kills"] / stats["Deaths"] if stats["Deaths"] else stats["Kills"]
-                winrate = stats["Wins"] / stats["Games Played"] * 100 if stats["Games Played"] else 0
-                st.metric("K/D Ratio", f"{kd:.2f}")
-                st.metric("Win Rate", f"{winrate:.2f}%")
-    except Exception as e:
-        st.error(f"Erreur API : {e}")
+                # --- Affichage simple des stats clés ---
+                st.subheader(f"Stats SkyWars pour {user_input}")
+                st.write(f"**Wins:** {skywars.get('wins', 0)}")
+                st.write(f"**Losses:** {skywars.get('losses', 0)}")
+                st.write(f"**Kills:** {skywars.get('kills', 0)}")
+                st.write(f"**Deaths:** {skywars.get('deaths', 0)}")
+                st.write(f"**Coins:** {skywars.get('coins', 0)}")
+                st.write(f"**Win Streak:** {skywars.get('win_streak', 0)}")
